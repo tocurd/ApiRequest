@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+	
+	<div api-name='User/Login' id="api-login">
+		<input type="text" api-param-name="username" value="dsadas">
+		<input type="password" api-param-name="password" value="dsadas">
+		<button id="js-login">登陆1</button>
+		<button api-event="clickSubmit">登陆2</button>
+	</div>
+
+
+	<script type="text/javascript" src='./assets/bin/jquery/jquery-3.1.1.min.js'></script>
+	<script type="text/javascript" src='./ApiRequest.js'></script>
+	<script type="text/javascript">
+
+
+
+		var ApiRequest = new ApiRequest({
+			User : {
+				Login : {
+					url : 'login.php',
+					params : {
+						username : {max : 16 , min : 5 , name : '用户名'},
+						password : {max : 16 , min : 5 , name : '密码'},
+					}
+				}
+			}
+		} , {
+			url : 'http://test.tocurd.com/',
+		});
+
+
+		$("#js-login").click(function(){
+			// 直接将数据提交
+			ApiRequest.push("User/Login").then(function(reslut){
+				console.log(reslut)
+			} , function(data){
+				console.log(data)
+			});
+			
+		})
+
+
+
+
+		// 对数据进行二次处理后进行提交
+		$("[api-event='clickSubmit']").click(function(){
+			ApiRequest.push("User/Login",{
+				autoCommit : false
+			}).then(function(reslut){
+				reslut.data.params.username = 'tocurd';
+
+				ApiRequest.commit(reslut.data.api , reslut.data.params).then(function(data){
+					console.log(data)
+				}, function(data){
+					console.log(data)
+				})
+
+			} , function(data){
+				console.log(data)
+			});
+		})
+
+
+
+	</script>
+
+</body>
+</html>
