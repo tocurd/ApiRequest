@@ -2,7 +2,12 @@
 ApiRequest是为了简化前端开发中遇到的复杂重复的ajax请求而开发的插件，其能够有效的帮助开发者简单快速的创建一个ajax请求。  
 并且ApiRequest会在请求的过程中会对用户输入的数据进行简单的前端检测处理，保证发送给后端的数据是规范正确的数据（后端需同样进行数据的检测）
 
+<<<<<<< HEAD
 ## ApiRequest Html 结构
+=======
+
+### ApiRequest Html 结构
+>>>>>>> 53d3e45609d02023207b392abbb341116f27aef7
 ```html
 <div api-name='User/Login' id="api-login">
 	<input type="text" api-param-name="username" value="dsadas">
