@@ -191,7 +191,7 @@ var ApiRequest = (function(ApiRequestList){
 			rule : {
 				min : '不能少于' ,
 				max : '不能大于' ,
-				null : '不能为空' ,
+				nullText : '不能为空' ,
 				error : '规则不正确' ,
 			} , 
 			sum : '位字符',
@@ -209,7 +209,7 @@ var ApiRequest = (function(ApiRequestList){
 			if( ! isset(thisRule) || ! isset(thisRule['name'])) return false;
 
 			if(isset(thisRule.is_null) && thisRule.is_null == true && length == 0){
-				error.push({message : thisName + toastText.rule.null , data : thisRule.other});
+				error.push({message : thisName + toastText.rule.nullText , data : thisRule.other});
 			}else if(isset(thisRule.min) && length < thisRule.min){
 				error.push({message : thisName + toastText.rule.min + thisRule.min + toastText.sum , data : thisRule.other});
 			}else if(isset(thisRule.max) && length > thisRule.max){
