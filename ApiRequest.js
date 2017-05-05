@@ -41,7 +41,18 @@ var ApiRequest = (function(ApiRequestList){
 
 
 		var SelectApiParams = getFrom(apiName , option , this.SelectApi);
-		var RuleReslut = rule(SelectApiParams , this.SelectApi.params);
+
+
+		// 授予选中api other参数
+		var temp = this.SelectApi.params;
+		$.each(this.SelectApi.params , function(key , value){
+			temp[key]['other'] = SelectApiParams['apiOther'][key];
+		});
+		this.SelectApi.params = temp;
+
+
+
+		var RuleReslut = rule(SelectApiParams['apiParams'] , this.SelectApi.params);
 		if(RuleReslut.length > 0) return reslut(false , RuleReslut[0].message , RuleReslut , 'rule_error');
 
 
@@ -53,7 +64,7 @@ var ApiRequest = (function(ApiRequestList){
 			} , 'ready');
 		}
 
-		return this.commit(this.SelectApi , SelectApiParams);
+		return this.commit(this.SelectApi , SelectApiParams , apiName);
 	}
 
 	
@@ -63,11 +74,17 @@ var ApiRequest = (function(ApiRequestList){
 	 * @param  {[type]} params [description]
 	 * @return {[type]}        [description]
 	 */
-	modules.prototype.commit = function(api , params){
+	modules.prototype.commit = function(api , params , apiName){
 		var promise = $.Deferred();
+
+
+		if(typeof api.url == 'undefined'){
+			api.url = apiName.replace('\\' , '/').toLowerCase();
+		}
+
 		doAjax({
 			url : (isset(this.AllOption) && isset(this.AllOption.url) ? this.AllOption.url : '') + api.url,
-			data : params , 
+			data : params['apiParams'] , 
 			type : isset(api.type) ? api.type : "POST",
 			dataType : isset(api.dataType) ? api.dataType : "JSON",
 			timeOut : isset(api.timeOut) ? api.timeOut : 5000,
@@ -77,39 +94,6 @@ var ApiRequest = (function(ApiRequestList){
 	}
 
 
-
-	/**
-	 * 用于绑定按钮的事件请求
-	 * @param  {[type]} data [description]
-	 * @return {[type]}      [description]
-	 */
-	var eventPush = function(data){
-		// var SelectApiParams = getFrom(data.apiName , data.option , data.SelectApi);
-		// var RuleReslut = rule(SelectApiParams , data.SelectApi.params);
-		// if(RuleReslut.length > 0) return reslut(false , RuleReslut[0].message , RuleReslut , 'rule_error');
-		
-
-		// if(isset(data.option) && data.option.autoCommit == false){
-		// 	alert('x')
-		// 	return reslut(true , "" , {
-		// 		api : data.SelectApi,
-		// 		params : SelectApiParams
-		// 	} , 'ready');
-		// }
-
-
-		// var promise = $.Deferred();
-		// doAjax({
-		// 	url : api.url,
-		// 	data : params , 
-		// 	type : isset(api.type) ? api.type : "POST",
-		// 	dataType : isset(api.dataType) ? api.dataType : "JSON",
-		// 	timeOut : isset(api.timeOut) ? api.timeOut : 5000,
-		// 	promise: promise,
-		// });
-		// return this.commit(this.SelectApi , SelectApiParams);
-	}
-	
 
 
 
@@ -180,6 +164,8 @@ var ApiRequest = (function(ApiRequestList){
 	}
 
 
+
+
 	/**
 	 * 检测用户输入规范
 	 * @param  {[type]} params [description]
@@ -234,11 +220,15 @@ var ApiRequest = (function(ApiRequestList){
 		var target = ! (isset(option) && isset(option.target))
 			? "[" + NameOption.name.apiName + "='" + apiName + "']" 
 			: option.target ,
-		apiParamsTemp = {};
+		apiParamsTemp = {} , apiOther = {} ;
 		$(target + " [" + apiParamName + ']').each(function(key , value){
-			apiParamsTemp[$(value).attr(apiParamName)] = $(value).val()
+			apiParamsTemp[$(value).attr(apiParamName)] = $(value).val();
+			apiOther[$(value).attr(apiParamName)] = $(value);
 		});
-		return apiParamsTemp;
+		return {
+			apiParams : apiParamsTemp ,
+			apiOther : apiOther
+		};
 	}
 
 
