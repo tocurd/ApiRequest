@@ -32,8 +32,9 @@ var ApiRequest = (function(ApiRequestList){
 	 * @param  {[type]} option [{
 	 *    autoCommit 是否自动提交(bool)
 	 *    target 自动获取参数的元素
+	 *    params
 	 * }]
-	 * @param  {[type]} target [自定义获取API参数的元素]
+	 * @param  {[type]} target [自定义获取API参数的]
 	 */
 	modules.prototype.push = function(apiName , option){
 		this.SelectApi = uriGet(this.ApiRequestList , apiName);
@@ -64,6 +65,9 @@ var ApiRequest = (function(ApiRequestList){
 			} , 'ready');
 		}
 
+		if(isset(option) && isset(option.params)){
+			SelectApiParams.apiParams = $.extend(SelectApiParams.apiParams , option.params);
+		}
 		return this.commit(this.SelectApi , SelectApiParams , apiName);
 	}
 
