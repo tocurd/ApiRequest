@@ -1,21 +1,19 @@
-/**
- * api返回格式
- * {state : true , message : "" , xxx : {} , xxxx : {}}
- * {state : false , message : "" , xxx : {} , xxxx : {}}
- */
+
 
 var ApiRequest = (function(ApiRequestList){
-	var modules = function(ApiRequestList , option){
-		this.ApiRequestList = ApiRequestList;
-		this.AllOption = option;
-	} , ApiRequestList = {} ,
-		SelectApi = {},
-		AllOption = {};
 
-	var NameOption = {
+
+	var Rule = {};
+	var deBug = true;
+	var ApiRequestData = {};
+	var ApiRequestRuleAttribute = ['is_null' , 'is_number' , 'type' , 'max' , 'min' , 'name'];
+	var ApiRequestAttribute = ['url' , 'method'];
+	var ApiName = '';
+	var config = {
 		name : {
 			apiName : "api-name",
 			apiParamName : "api-param-name",
+			apiEvent : "api-event",
 		},
 		event : {
 			click : "clickSubmit"
@@ -26,72 +24,78 @@ var ApiRequest = (function(ApiRequestList){
 
 
 
-	/**
-	 * 在此进行请求预准备
-	 * @param  {[type]} api    [API名称]
-	 * @param  {[type]} option [{
-	 *    autoCommit 是否自动提交(bool)
-	 *    target 自动获取参数的元素
-	 *    params
-	 * }]
-	 * @param  {[type]} target [自定义获取API参数的]
-	 */
+	var modules = function(ApiRequestList , option){
+		ApiRequestData.ApiRequestList = ApiRequestList;
+		ApiRequestData.option = option;
+	}
+
+
+
+
 	modules.prototype.push = function(apiName , option){
-		this.SelectApi = uriGet(this.ApiRequestList , apiName);
-		if(this.SelectApi == false) return reslut(false , "未能找到定义好的API" , {});
+		if( ! isset(option)) option = {};
+
+		ApiRequestData.SelectApi = uriGet(ApiRequestData.ApiRequestList , apiName);
 
 
-		var SelectApiParams = getFrom(apiName , option , this.SelectApi);
+		// 去获取页面内表单的数据
+		var from_data = this.getApiFrom(apiName);
+		if(from_data != false) $.each(from_data , function(key , value){
+			ApiRequestData.SelectApi[key] = 
+			typeof value == 'object' ? 
+			$.extend(true , ApiRequestData.SelectApi[key] , from_data[key]) : value;
+		})
+
+		if(ApiRequestData.SelectApi == false) return reslut(false , apiName + " 未能找到定义好的API");
 
 
-		// 授予选中api other参数
-		var temp = this.SelectApi.params;
-		$.each(this.SelectApi.params , function(key , value){
-			temp[key]['other'] = SelectApiParams['apiOther'][key];
+
+		// 合并表单内的数据
+		$.each(ApiRequestAttribute , function(key , value){
+			if(ApiRequestData.SelectApi[value] && ApiRequestData.SelectApi[value] != ''){
+				option[value] = isset(ApiRequestData.SelectApi[value]) && ApiRequestData.SelectApi[value] != '' ? ApiRequestData.SelectApi[value] : (isset(option[value]) ? option[value] : '')
+			}
 		});
-		this.SelectApi.params = temp;
 
 
 
-		var RuleReslut = rule(SelectApiParams['apiParams'] , this.SelectApi.params);
+		// 对用户输入的数据进行规范性检测
+		var RuleReslut = rule(ApiRequestData.SelectApi.params , ApiRequestData.SelectApi.rule , ApiRequestData.SelectApi.element);
 		if(RuleReslut.length > 0) return reslut(false , RuleReslut[0].message , RuleReslut , 'rule_error');
 
 
-		if(isset(option) && option.autoCommit == false){
-			var SelectApi = this.SelectApi;
-			return reslut(true , "" , {
-				api : SelectApi,
-				params : SelectApiParams
-			} , 'ready');
-		}
 
+
+		// 将用户输入的参数与系统获取的参数合并
 		if(isset(option) && isset(option.params)){
-			SelectApiParams.apiParams = $.extend(SelectApiParams.apiParams , option.params);
+			ApiRequestData.SelectApi.params = $.extend(ApiRequestData.SelectApi.params , option.params);
 		}
-		return this.commit(this.SelectApi , SelectApiParams , apiName);
-	}
 
-	
-	/**
-	 * 提交用户的请求
-	 * @param  {[type]} api    [description]
-	 * @param  {[type]} params [description]
-	 * @return {[type]}        [description]
-	 */
-	modules.prototype.commit = function(api , params , apiName){
+
+		// 开始提交
 		var promise = $.Deferred();
+		var url = apiName.replace('\\' , '/').toLowerCase();
 
 
-		if(typeof api.url == 'undefined'){
-			api.url = apiName.replace('\\' , '/').toLowerCase();
+		if(isset(option) && isset(option.url)){
+			url = option.url;
+			if(url.indexOf("http://") < 0){
+				if(isset(ApiRequestData.option) && isset(ApiRequestData.option.url)){
+					url = ApiRequestData.option.url + url;
+				}
+			}
+		}else{
+			url = (isset(ApiRequestData.option) && isset(ApiRequestData.option.url) ? ApiRequestData.option.url : '') + url
 		}
+
+
 
 		doAjax({
-			url : (isset(this.AllOption) && isset(this.AllOption.url) ? this.AllOption.url : '') + api.url,
-			data : params['apiParams'] , 
-			type : isset(api.type) ? api.type : "POST",
-			dataType : isset(api.dataType) ? api.dataType : "JSON",
-			timeOut : isset(api.timeOut) ? api.timeOut : 5000,
+			url : url,
+			data : ApiRequestData.SelectApi.params , 
+			type : isset(option) && isset(option.type) ? option.type : "POST",
+			dataType :isset(option) && isset(option.dataType) ? api.dataType : "JSON",
+			timeOut :isset(option) && isset(option.timeOut) ? api.timeOut : 5000,
 			promise: promise,
 		});
 		return promise;
@@ -99,14 +103,24 @@ var ApiRequest = (function(ApiRequestList){
 
 
 
-
-
 	/**
-	 * 向后端发送处理请求
-	 * @param  {[type]} options [description]
-	 * @param  {[type]} isfile  [description]
-	 * @return {[type]}         [description]
+	 * 处理提交成功后的自动刷新或跳转
+	 * @param  {[type]} url [description]
+	 * @return {[type]}     [description]
 	 */
+	modules.prototype.success = function(url , time){
+		setTimeout(function(){
+			if(url == '' || typeof url == 'undefined'){
+				window.location.reload()
+			}else{
+				window.location.href = url
+			}
+		} , isset(time) ? time : 1000)
+	}
+
+
+
+
 	var doAjax = function(options){
 		$.ajax({
 			url : options.url , 
@@ -152,29 +166,51 @@ var ApiRequest = (function(ApiRequestList){
 
 
 
+
 	/**
-	 * 处理提交成功后的自动刷新或跳转
-	 * @param  {[type]} url [description]
-	 * @return {[type]}     [description]
+	 * 获取页面中定义的API
+	 * @param  {[type]} apiName [description]
+	 * @return {[type]}         [description]
 	 */
-	modules.prototype.success = function(url){
-		setTimeout(function(){
-			if(url == '' || typeof url == 'undefined'){
-				window.location.reload()
-			}else{
-				window.location.href = url
+	modules.prototype.getApiFrom = function(apiName){
+		var $api = $(replace("[$='$']" , [config.name.apiName , apiName]));
+		var $apiParams = $api.find(replace("[$]" , [config.name.apiParamName]));
+		var params = {};
+		var element = {};
+		var rule = {};
+
+
+		$.each($apiParams , function(key , value){
+			var $value = $(value);
+			var val =  ! isset($value.attr('data')) ? $(value).val() : $value.attr('data');
+			params[$(value).attr(config.name.apiParamName)] = val;
+			element[$(value).attr(config.name.apiParamName)] = $(value);
+
+			rule[$(value).attr(config.name.apiParamName)] = {};
+			$.each(ApiRequestRuleAttribute , function(type_key , type_value){
+				if(isset($value.attr(type_value))){
+					rule[$(value).attr(config.name.apiParamName)][type_value] = $value.attr(type_value);
+				}
+			})
+		})
+
+		if(params.length <= 0 || rule.length <= 0) return false;
+		var data = {};
+		$.each(ApiRequestAttribute , function(api_key , api_value){
+			if(isset($api.attr(api_value))){
+				data[api_value] = $api.attr(api_value);
 			}
-		} , ! isNaN(url) ? url : 1000)
+		});
+
+		data.rule = rule;
+		data.params = params;
+		data.element = element;
+		return data;
 	}
 
 
 
 
-	/**
-	 * 检测用户输入规范
-	 * @param  {[type]} params [description]
-	 * @param  {[type]} rule   [description]
-	 */
 	var rule = function(params , rule){
 		var toastText = {
 			header : '您输入的' , 
@@ -198,7 +234,7 @@ var ApiRequest = (function(ApiRequestList){
 			var length = param.length;
 			if( ! isset(thisRule) || ! isset(thisRule['name'])) return false;
 
-			if(isset(thisRule.is_null) && thisRule.is_null == true && length == 0){
+			if(isset(thisRule.is_null) && thisRule.is_null == false && length == 0){
 				error.push({message : thisName + toastText.rule.nullText , data : thisRule.other});
 			}else if(isset(thisRule.min) && length < thisRule.min){
 				error.push({message : thisName + toastText.rule.min + thisRule.min + toastText.sum , data : thisRule.other});
@@ -213,29 +249,6 @@ var ApiRequest = (function(ApiRequestList){
 	}
 
 
-
-	/**
-	 * 获取用户提供的表单内的数据
-	 * @param  {[type]} apiName [description]
-	 * @param  {[type]} option  [description]
-	 */
-	var getFrom = function(apiName , option){
-		var apiParamName = NameOption.name.apiParamName;
-		var target = ! (isset(option) && isset(option.target))
-			? "[" + NameOption.name.apiName + "='" + apiName + "']" 
-			: option.target ,
-		apiParamsTemp = {} , apiOther = {} ;
-		$(target + " [" + apiParamName + ']').each(function(key , value){
-			apiParamsTemp[$(value).attr(apiParamName)] = $(value).val();
-			apiOther[$(value).attr(apiParamName)] = $(value);
-		});
-		return {
-			apiParams : apiParamsTemp ,
-			apiOther : apiOther
-		};
-	}
-
-
 	/**
 	 * 用于反馈给用户的一个结果
 	 * @param  {[type]} static  [description]
@@ -243,16 +256,16 @@ var ApiRequest = (function(ApiRequestList){
 	 * @param  {[type]} data    [description]
 	 * @param  {[type]} code    [description]
 	 */
-	var reslut = function(static , message , data , code){
+	var reslut = function(static , message , data){
 		then = function(success , error){
 			var returnParams = {
 				message : message,
 				data : data ,
-				code : code ,
 			};
 			if(static){
 				if(typeof success == 'function') success(returnParams);
 			}else{
+				if(deBug) console.error(message);
 				if(typeof error == 'function') error(returnParams)
 			}
 		}
@@ -260,15 +273,33 @@ var ApiRequest = (function(ApiRequestList){
 	}
 
 
+
 	var isset = function(context){
 		return typeof context !== 'undefined';
 	}
-	uriGet = function(apiList , uri){
+
+	var replace = function(text , array){
+		var text = text.split('');
+		var index = 0;
+		$.each(text , function(key , value){
+			if(value == "$"){
+				text.splice(key , 1 , array[index]);
+				index ++;
+			}
+		});
+		return text.join('');
+	}
+
+
+	var uriGet = function(apiList , uri){
 		var temp = apiList;
 		var uri = uri.split('/');
-		$.each(uri , function(key , value){
-			temp = temp[value];
-		});
+		for(value in uri){
+			if(typeof temp[uri[value]] == 'undefined'){
+				return false;
+			}
+			temp = temp[uri[value]];
+		}
 		return typeof temp == 'undefined' ? false : temp;
 	}
 

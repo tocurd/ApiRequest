@@ -6,16 +6,16 @@
 </head>
 <body>
 	
-	<div api-name='User/Login' id="api-login">
-		<input type="text" api-param-name="username" value="dsadas">
-		<input type="password" api-param-name="password" value="dsadas">
+	<div api-name='User/Login' id="api-login" url="login.php">
+		<input type="text" api-param-name="username" value="dsadas" max="26">
+		<input type="password" api-param-name="password" value="dsadas" max="16">
 		<button id="js-login">登陆1</button>
 		<button api-event="clickSubmit">登陆2</button>
 	</div>
 
 
 	<script type="text/javascript" src='./assets/bin/jquery/jquery-3.1.1.min.js'></script>
-	<script type="text/javascript" src='./ApiRequest.min.js'></script>
+	<script type="text/javascript" src='./ApiRequest.2.0.js'></script>
 	<script type="text/javascript">
 
 
@@ -23,8 +23,8 @@
 		var ApiRequest = new ApiRequest({
 			User : {
 				Login : {
-					url : 'login.php',
-					params : {
+					url : 'login.ph2p',
+					rule : {
 						username : {max : 16 , min : 5 , name : '用户名'},
 						password : {max : 16 , min : 5 , name : '密码'},
 					}
