@@ -9,16 +9,6 @@ var ApiRequest = (function(ApiRequestList){
 	var ApiRequestRuleAttribute = ['is_null' , 'is_number' , 'type' , 'max' , 'min' , 'name'];
 	var ApiRequestAttribute = ['url' , 'method'];
 	var ApiName = '';
-	var ApiInfo = {};
-
-	var time = {
-		handleTime : 0,
-		getTime : function(){
-			var myData = new Date(); 
-			var times = myData.getTime();
-			return times;
-		}
-	};
 	var config = {
 		name : {
 			apiName : "api-name",
@@ -41,11 +31,11 @@ var ApiRequest = (function(ApiRequestList){
 		if(isset(option) && isset(option.event) && option.event){
 			$(replace("[$='$']" , [config.name.apiEvent , config.event.click])).each(function(key , value){
 				$(value).click(function(){
-					isset(option.start) ? option.start($(value).attr('api-name')) : ''
+					option.start($(value).attr('api-name') , data)
 					ApiRequest.push($(value).attr('api-name')).then(function(data){
-						isset(option.success) ? option.success($(value).attr('api-name') , data) : ''
+						option.success($(value).attr('api-name') , data)
 					} , function(data){
-						isset(option.error) ? option.error($(value).attr('api-name') , data) : ''
+						option.error($(value).attr('api-name') , data)
 					});
 				})
 			})
@@ -54,9 +44,8 @@ var ApiRequest = (function(ApiRequestList){
 
 
 
-	modules.prototype.push = function(apiName , option){
-		time.handleTime = time.getTime();
 
+	modules.prototype.push = function(apiName , option){
 		if( ! isset(option)) option = {};
 
 		ApiRequestData.SelectApi = uriGet(ApiRequestData.ApiRequestList , apiName);
@@ -73,6 +62,7 @@ var ApiRequest = (function(ApiRequestList){
 		if(ApiRequestData.SelectApi == false) return reslut(false , apiName + " 未能找到定义好的API");
 
 
+
 		// 合并表单内的数据
 		$.each(ApiRequestAttribute , function(key , value){
 			if(ApiRequestData.SelectApi[value] && ApiRequestData.SelectApi[value] != ''){
@@ -81,9 +71,11 @@ var ApiRequest = (function(ApiRequestList){
 		});
 
 
+
 		// 对用户输入的数据进行规范性检测
 		var RuleReslut = rule(ApiRequestData.SelectApi.params , ApiRequestData.SelectApi.rule , ApiRequestData.SelectApi.element);
 		if(RuleReslut.length > 0) return reslut(false , RuleReslut[0].message , RuleReslut , 'rule_error');
+
 
 
 
@@ -109,8 +101,7 @@ var ApiRequest = (function(ApiRequestList){
 			url = (isset(ApiRequestData.option) && isset(ApiRequestData.option.url) ? ApiRequestData.option.url : '') + url
 		}
 
-		time.handleTime = time.getTime() - time.handleTime;
-		ApiInfo.handleTime = time.handleTime;
+
 
 		doAjax({
 			url : url,
@@ -144,8 +135,6 @@ var ApiRequest = (function(ApiRequestList){
 
 
 	var doAjax = function(options){
-		time.ajaxTime = time.getTime();
-		ApiInfo.url = options.url;
 		$.ajax({
 			url : options.url , 
 			data : options.data , 
@@ -183,10 +172,6 @@ var ApiRequest = (function(ApiRequestList){
 				}
 			},
 			complete : function(){
-				time.ajaxTime = time.getTime() - time.ajaxTime;
-				ApiInfo.ajaxTime = time.ajaxTime;
-
-				console.log(ApiInfo)
 				isRequest = true;
 			}
 		});
