@@ -19,6 +19,7 @@ var ApiRequest = (function(ApiRequestList){
 			return times;
 		}
 	};
+
 	var config = {
 		name : {
 			apiName : "api-name",
@@ -57,20 +58,28 @@ var ApiRequest = (function(ApiRequestList){
 	modules.prototype.push = function(apiName , option){
 		time.handleTime = time.getTime();
 
+
 		if( ! isset(option)) option = {};
 
 		ApiRequestData.SelectApi = uriGet(ApiRequestData.ApiRequestList , apiName);
 
 
+
+
 		// 去获取页面内表单的数据
 		var from_data = this.getApiFrom(apiName);
-		if(from_data != false) $.each(from_data , function(key , value){
-			ApiRequestData.SelectApi[key] = 
-			typeof value == 'object' ? 
-			$.extend(true , ApiRequestData.SelectApi[key] , from_data[key]) : value;
-		})
+		if(from_data != false){
+			if(ApiRequestData.SelectApi == false) ApiRequestData.SelectApi = {};
+			$.each(from_data , function(key , value){
+				ApiRequestData.SelectApi[key] = 
+				typeof value == 'object' ? 
+				$.extend(true , ApiRequestData.SelectApi[key] , from_data[key]) : value;
+			})
+		}
 
 		if(ApiRequestData.SelectApi == false) return reslut(false , apiName + " 未能找到定义好的API");
+
+
 
 
 		// 合并表单内的数据
@@ -111,6 +120,9 @@ var ApiRequest = (function(ApiRequestList){
 
 		time.handleTime = time.getTime() - time.handleTime;
 		ApiInfo.handleTime = time.handleTime;
+		ApiInfo.url = url;
+		ApiInfo.data = ApiRequestData.SelectApi.params;
+		ApiInfo.type = isset(option) && isset(option.type) ? option.type : "POST";
 
 		doAjax({
 			url : url,
@@ -146,6 +158,7 @@ var ApiRequest = (function(ApiRequestList){
 	var doAjax = function(options){
 		time.ajaxTime = time.getTime();
 		ApiInfo.url = options.url;
+		ApiInfo.jsonError = false;
 		$.ajax({
 			url : options.url , 
 			data : options.data , 
@@ -156,29 +169,36 @@ var ApiRequest = (function(ApiRequestList){
 			timeOut : options.timeOut, 
 			content : window,
 			success : function(data){
+				ApiInfo.data = data.responseText;
 				if(data.state){
 					options.promise.resolve(data);
 				}else{
 					if(isset(data.message)){
 						options.promise.reject({
-							message : "请求出现异常，接口服务器尚未反馈错误信息，请稍候再试！"
+							message : "请求出现异常，接口服务器尚未反馈错误信息，请稍候再试！",
+							info : ApiInfo
 						});
 					}else{
 						options.promise.reject({
-							message : data.message
+							message : data.message,
+							info : ApiInfo
 						});
 					}
 				}
 			},
 			error : function(data){
+				ApiInfo.data = data.responseText;
+				ApiInfo.error = false;
 				try{
 					var error = JSON.parse(data.responseText);
 					options.promise.reject({
-						message : error.message
+						message : error.message,
+						info : ApiInfo
 					});
 				}catch (e){
 					options.promise.reject({
-						message : "请求出现异常，服务器繁忙或出现问题无法处理您的请求，请稍候再试！"
+						message : "请求出现异常，服务器繁忙或出现问题无法处理您的请求，请稍候再试！",
+						info : ApiInfo
 					});
 				}
 			},
@@ -186,7 +206,6 @@ var ApiRequest = (function(ApiRequestList){
 				time.ajaxTime = time.getTime() - time.ajaxTime;
 				ApiInfo.ajaxTime = time.ajaxTime;
 
-				console.log(ApiInfo)
 				isRequest = true;
 			}
 		});
