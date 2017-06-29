@@ -5,12 +5,16 @@
 	<title>Document</title>
 </head>
 <body>
-	
+	<div api-name='User/Login2' id="api-login" url="log321in.php" method="get">
+		<input type="text" api-param-name="username" value="dsadas" max="26">
+		<input type="password" api-param-name="password" value="dsadas" max="16">
+		<button api-event="clickSubmit" event-api-name="User/Login2">登陆</button>
+	</div>
+
 	<div api-name='User/Login2' id="api-login" url="login.php" method="get">
 		<input type="text" api-param-name="username" value="dsadas" max="26">
 		<input type="password" api-param-name="password" value="dsadas" max="16">
-		<button id="js-login">登陆1</button>
-		<button api-event="clickSubmit" api-name="User/Login2">登陆2</button>
+		<button api-event="clickSubmit" event-api-name="User/Login2">登陆</button>
 	</div>
 
 

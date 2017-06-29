@@ -24,7 +24,8 @@ var ApiRequest = (function(ApiRequestList){
 		name : {
 			apiName : "api-name",
 			apiParamName : "api-param-name",
-			apiEvent : "api-event"
+			apiEvent : "api-event",
+			eventApiName : "event-api-name"
 		},
 		event : {
 			click : "clickSubmit"
@@ -42,13 +43,18 @@ var ApiRequest = (function(ApiRequestList){
 		if(isset(option) && isset(option.event) && option.event){
 			$(replace("[$='$']" , [config.name.apiEvent , config.event.click])).each(function(key , value){
 				$(value).click(function(){
-					isset(option) && isset(option.start) ? option.start($(value).attr('api-name')) : '';
+					isset(option) && isset(option.start) ? option.start($(value).attr(config.name.eventApiName)) : '';
+
+					$api_element = $(this).parents(replace("[$='$']" , [config.name.apiName , $(value).attr(config.name.eventApiName)]));
 
 
-					ApiRequest.push($(value).attr('api-name')).then(function(data){
-						isset(option.success) ? option.success($(value).attr('api-name') , data) : ''
+
+					ApiRequest.push($(value).attr(config.name.eventApiName) , {
+						target : $api_element
+					}).then(function(data){
+						isset(option) && isset(option.success) ? option.success($(value).attr(config.name.eventApiName) , data) : ''
 					} , function(data){
-						isset(option.error) ? option.error($(value).attr('api-name') , data) : ''
+						isset(option) && isset(option.error) ? option.error($(value).attr(config.name.eventApiName) , data) : ''
 					});
 				})
 			})
@@ -69,7 +75,7 @@ var ApiRequest = (function(ApiRequestList){
 
 
 		// 去获取页面内表单的数据
-		var from_data = this.getApiFrom(apiName);
+		var from_data = this.getApiFrom(apiName , option);
 		if(from_data != false){
 			if(ApiRequestData.SelectApi == false) ApiRequestData.SelectApi = {};
 			$.each(from_data , function(key , value){
@@ -221,8 +227,12 @@ var ApiRequest = (function(ApiRequestList){
 	 * @param  {[type]} apiName [description]
 	 * @return {[type]}         [description]
 	 */
-	modules.prototype.getApiFrom = function(apiName){
-		var $api = $(replace("[$='$']" , [config.name.apiName , apiName]));
+	modules.prototype.getApiFrom = function(apiName , option){
+		if(isset(option) && isset(option.target)){
+			$api = option.target;
+		}else{
+			var $api = $(replace("[$='$']" , [config.name.apiName , apiName]));
+		}
 		var $apiParams = $api.find(replace("[$]" , [config.name.apiParamName]));
 		var params = {};
 		var element = {};
