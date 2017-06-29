@@ -20,7 +20,7 @@
 	}
 
 </script>
-	<script type="text/javascript" src='./assets/bin/jquery/jquery-3.1.1.min.js'></script>
+	<script type="text/javascript" src='https://cdn.bootcss.com/jquery/1.12.3/jquery.js'></script>
 	<script type="text/javascript" src='./ApiRequest.js'></script>
 	<script type="text/javascript">
 
@@ -31,6 +31,7 @@
 		}
 
 		var error = function error(data , data2){
+			alert('dsa');
 			console.log(data)
 			console.log(data2)
 		}
@@ -42,7 +43,7 @@
 					url : 'login.ph2p',
 					rule : {
 						username : {max : 16 , min : 5 , name : '用户名'},
-						password : {max : 16 , min : 5 , name : '密码'},
+						password : {max : 16 , min : 5 , name : '密码'}
 					}
 				}
 			}
@@ -50,7 +51,7 @@
 			url : 'http://test.tocurd.com/',
 			event : true,
 			success : success,
-			error : error,
+			error : error
 		});
 
 

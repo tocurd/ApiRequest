@@ -24,7 +24,7 @@ var ApiRequest = (function(ApiRequestList){
 		name : {
 			apiName : "api-name",
 			apiParamName : "api-param-name",
-			apiEvent : "api-event",
+			apiEvent : "api-event"
 		},
 		event : {
 			click : "clickSubmit"
@@ -42,7 +42,9 @@ var ApiRequest = (function(ApiRequestList){
 		if(isset(option) && isset(option.event) && option.event){
 			$(replace("[$='$']" , [config.name.apiEvent , config.event.click])).each(function(key , value){
 				$(value).click(function(){
-					isset(option.start) ? option.start($(value).attr('api-name')) : ''
+					isset(option) && isset(option.start) ? option.start($(value).attr('api-name')) : '';
+
+
 					ApiRequest.push($(value).attr('api-name')).then(function(data){
 						isset(option.success) ? option.success($(value).attr('api-name') , data) : ''
 					} , function(data){
@@ -130,7 +132,7 @@ var ApiRequest = (function(ApiRequestList){
 			type : isset(option) && isset(option.type) ? option.type : "POST",
 			dataType :isset(option) && isset(option.dataType) ? api.dataType : "JSON",
 			timeOut :isset(option) && isset(option.timeOut) ? api.timeOut : 5000,
-			promise: promise,
+			promise: promise
 		});
 		return promise;
 	}
@@ -186,7 +188,7 @@ var ApiRequest = (function(ApiRequestList){
 					}
 				}
 			},
-			error : function(data){
+			error : function(data , data2 , data3){
 				ApiInfo.data = data.responseText;
 				ApiInfo.error = false;
 				try{
@@ -265,7 +267,7 @@ var ApiRequest = (function(ApiRequestList){
 				min : '不能少于' ,
 				max : '不能大于' ,
 				nullText : '不能为空' ,
-				error : '规则不正确' ,
+				error : '规则不正确'
 			} , 
 			sum : '位字符',
 			footer : ''
@@ -307,7 +309,7 @@ var ApiRequest = (function(ApiRequestList){
 		then = function(success , error){
 			var returnParams = {
 				message : message,
-				data : data ,
+				data : data
 			};
 			if(static){
 				if(typeof success == 'function') success(returnParams);
