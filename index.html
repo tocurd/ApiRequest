@@ -28,22 +28,23 @@
 	<script type="text/javascript" src='./ApiRequest.js'></script>
 	<script type="text/javascript">
 
-
 		var success = function success(data , data2){
 			console.log(data)
 			console.log(data2)
+			alert('成功')
 		}
 
 		var error = function error(data , data2){
-			alert('dsa');
 			console.log(data)
 			console.log(data2)
+			alert('失败')
 		}
+
 
 
 		var ApiRequest = new ApiRequest({
 			User : {
-				Login : {
+				Reg : {
 					url : 'login.ph2p',
 					rule : {
 						username : {max : 16 , min : 5 , name : '用户名'},

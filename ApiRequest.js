@@ -40,13 +40,20 @@ var ApiRequest = (function(ApiRequestList){
 		ApiRequestData.ApiRequestList = ApiRequestList;
 		ApiRequestData.option = option;
 
+
+		// 解决部分IE可能不支持console的问题
+		window.console = window.console || (function () {  
+			var c = {}; c.log = c.warn = c.debug = c.info = c.error = c.time = c.dir = c.profile  
+			= c.clear = c.exception = c.trace = c.assert = function () { };  
+			return c;  
+		})();  
+
 		if(isset(option) && isset(option.event) && option.event){
 			$(replace("[$='$']" , [config.name.apiEvent , config.event.click])).each(function(key , value){
 				$(value).click(function(){
 					isset(option) && isset(option.start) ? option.start($(value).attr(config.name.eventApiName)) : '';
 
 					$api_element = $(this).parents(replace("[$='$']" , [config.name.apiName , $(value).attr(config.name.eventApiName)]));
-
 
 
 					ApiRequest.push($(value).attr(config.name.eventApiName) , {
@@ -210,10 +217,10 @@ var ApiRequest = (function(ApiRequestList){
 					});
 				}
 			},
-			complete : function(){
+			complete : function(data){
 				time.ajaxTime = time.getTime() - time.ajaxTime;
 				ApiInfo.ajaxTime = time.ajaxTime;
-
+				ApiInfo.status = time.status;
 				isRequest = true;
 			}
 		});
@@ -233,6 +240,9 @@ var ApiRequest = (function(ApiRequestList){
 		}else{
 			var $api = $(replace("[$='$']" , [config.name.apiName , apiName]));
 		}
+
+		if($api.length > 1) if(deBug) console.warn('获取页面API中发现多个元素，请采用option target参数来定义所选择的元素');
+
 		var $apiParams = $api.find(replace("[$]" , [config.name.apiParamName]));
 		var params = {};
 		var element = {};
